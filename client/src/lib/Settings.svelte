@@ -322,7 +322,14 @@
         bind:value={hackatimeApiKey} 
         placeholder="Enter Hackatime API Key"
       />
-      <small>This key is used for integration with Hackatime.</small>
+      <small
+        >This key is used for integration with Hackatime. Find your hackatime
+        API key <a
+          href="https://hackatime.hackclub.com/my/settings/access"
+          target="_blank"
+          rel="noopener noreferrer">here</a
+        > (look in the "Wakatime config" section)</small
+      >
     </div>
 
     {#if message}<div class="success">{message}</div>{/if}
