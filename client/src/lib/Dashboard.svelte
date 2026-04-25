@@ -329,6 +329,13 @@
       <div class="create-form">
         <h3 class="create-form-title">Create New Space</h3>
 
+        {#if newSpaceType == "code-server" && !userData.user.hackatime_api_key}
+          <div class="warn-message">
+            Add your Hackatime API key in the settings to track time spent
+            coding in Spaces!
+          </div>
+        {/if}
+
         <div class="form-group">
           <label class="form-label" for="type">Space Type</label>
           <div class="custom-select">
