@@ -1,43 +1,41 @@
 <script>
-  import { createEventDispatcher, onMount } from 'svelte';
-  import { API_BASE } from '../config.js';
-
-  export let user;
+  import { createEventDispatcher, onMount } from "svelte";
+  import { API_BASE } from "../config.js";
+  import { userData } from "../stores/user.svelte.js";
 
   const dispatch = createEventDispatcher();
 
-  let username = user.username;
-  let hackatimeApiKey = user.hackatime_api_key || '';
-  
-  let newEmail = '';
-  let oldEmailCode = '';
-  let newEmailCode = '';
-  let emailStep = 'input';
-  
-  let message = '';
-  let error = '';
-  let emailMessage = '';
-  let emailError = '';
+  let hackatimeApiKey = userData.user.hackatime_api_key || "";
 
-  let hackclubMessage = '';
-  let hackclubError = '';
+  let newEmail = "";
+  let oldEmailCode = "";
+  let newEmailCode = "";
+  let emailStep = "input";
+
+  let message = "";
+  let error = "";
+  let emailMessage = "";
+  let emailError = "";
+
+  let hackclubMessage = "";
+  let hackclubError = "";
   let hackclubLoading = false;
 
-  $: isHackclubLinked = !!user.hackclub_id;
-  $: verificationStatus = user.hackclub_verification_status;
+  $: isHackclubLinked = !!userData.user.hackclub_id;
+  $: verificationStatus = userData.user.hackclub_verification_status;
 
   async function linkHackClub() {
-    hackclubError = '';
-    hackclubMessage = '';
+    hackclubError = "";
+    hackclubMessage = "";
     hackclubLoading = true;
 
     try {
       const response = await fetch(`${API_BASE}/oauth/hackclub/link`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        credentials: 'include'
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -45,44 +43,44 @@
       if (response.ok && data.url) {
         window.location.href = data.url;
       } else {
-        hackclubError = data.message || 'Failed to initiate Hack Club linking';
+        hackclubError = data.message || "Failed to initiate Hack Club linking";
         hackclubLoading = false;
       }
     } catch (err) {
-      hackclubError = 'An error occurred. Please try again.';
+      hackclubError = "An error occurred. Please try again.";
       console.error(err);
       hackclubLoading = false;
     }
   }
 
   async function unlinkHackClub() {
-    hackclubMessage = '';
-    hackclubError = '';
+    hackclubMessage = "";
+    hackclubError = "";
     hackclubLoading = true;
 
     try {
       const response = await fetch(`${API_BASE}/oauth/unlink`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        credentials: 'include'
+        credentials: "include",
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        hackclubMessage = 'Hack Club account unlinked successfully';
-        dispatch('update', { 
-          ...user, 
-          hackclub_id: null, 
-          hackclub_verification_status: null 
+        hackclubMessage = "Hack Club account unlinked successfully";
+        dispatch("update", {
+          ...userData.user,
+          hackclub_id: null,
+          hackclub_verification_status: null,
         });
       } else {
-        hackclubError = data.message || 'Failed to unlink account';
+        hackclubError = data.message || "Failed to unlink account";
       }
     } catch (err) {
-      hackclubError = 'An error occurred. Please try again.';
+      hackclubError = "An error occurred. Please try again.";
       console.error(err);
     } finally {
       hackclubLoading = false;
@@ -90,32 +88,32 @@
   }
 
   async function refreshVerification() {
-    hackclubMessage = '';
-    hackclubError = '';
+    hackclubMessage = "";
+    hackclubError = "";
     hackclubLoading = true;
 
     try {
       const response = await fetch(`${API_BASE}/oauth/refresh-verification`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        credentials: 'include'
+        credentials: "include",
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        hackclubMessage = 'Verification status refreshed';
-        dispatch('update', { 
-          ...user, 
-          hackclub_verification_status: data.data.verification_status 
+        hackclubMessage = "Verification status refreshed";
+        dispatch("update", {
+          ...userData.user,
+          hackclub_verification_status: data.data.verification_status,
         });
       } else {
-        hackclubError = data.message || 'Failed to refresh verification';
+        hackclubError = data.message || "Failed to refresh verification";
       }
     } catch (err) {
-      hackclubError = 'An error occurred. Please try again.';
+      hackclubError = "An error occurred. Please try again.";
       console.error(err);
     } finally {
       hackclubLoading = false;
@@ -124,178 +122,183 @@
 
   function getVerificationStatusText(status) {
     const statusMap = {
-      'verified': 'Verified',
-      'verified_eligible': 'Verified (Eligible for YSWS)',
-      'verified_but_over_18': 'Verified (Over 18)',
-      'pending': 'Pending Review',
-      'needs_submission': 'Needs Submission',
-      'rejected': 'Rejected',
-      'not_found': 'Not Found'
+      verified: "Verified",
+      verified_eligible: "Verified (Eligible for YSWS)",
+      verified_but_over_18: "Verified (Over 18)",
+      pending: "Pending Review",
+      needs_submission: "Needs Submission",
+      rejected: "Rejected",
+      not_found: "Not Found",
     };
-    return statusMap[status] || status || 'Unknown';
+    return statusMap[status] || status || "Unknown";
   }
 
   function getVerificationStatusClass(status) {
-    if (['verified', 'verified_eligible', 'verified_but_over_18'].includes(status)) {
-      return 'status-verified';
+    if (
+      ["verified", "verified_eligible", "verified_but_over_18"].includes(status)
+    ) {
+      return "status-verified";
     }
-    if (status === 'pending') return 'status-pending';
-    return 'status-unverified';
+    if (status === "pending") return "status-pending";
+    return "status-unverified";
   }
 
   async function saveProfile() {
-    message = '';
-    error = '';
-    
+    message = "";
+    error = "";
+
     try {
       const response = await fetch(`${API_BASE}/users/update`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
-          username,
-          hackatime_api_key: hackatimeApiKey
-        })
+          username: userData.user.username,
+          hackatime_api_key: hackatimeApiKey,
+        }),
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
-        message = 'Profile updated successfully';
-        dispatch('update', data.data);
+        message = "Profile updated successfully";
+        dispatch("update", data.data);
       } else {
-        error = data.message || 'Failed to update profile';
+        error = data.message || "Failed to update profile";
       }
     } catch (err) {
-      error = 'An error occurred. Please try again.';
+      error = "An error occurred. Please try again.";
       console.error(err);
     }
   }
 
   async function startEmailChange() {
-    emailMessage = '';
-    emailError = '';
-    
+    emailMessage = "";
+    emailError = "";
+
     if (!newEmail) {
-      emailError = 'Please enter a new email address';
+      emailError = "Please enter a new email address";
       return;
     }
-    
-    if (newEmail === user.email) {
-      emailError = 'New email must be different from current email';
+
+    if (newEmail === userData.user.email) {
+      emailError = "New email must be different from current email";
       return;
     }
 
     try {
       const response = await fetch(`${API_BASE}/users/send`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: user.email,
-          mode: 'update'
-        })
+          email: userData.user.email,
+          mode: "update",
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        emailMessage = 'Verification code sent to your current email (' + user.email + ')';
-        emailStep = 'verifyOld';
+        emailMessage =
+          "Verification code sent to your current email (" +
+          userData.user.email +
+          ")";
+        emailStep = "verifyOld";
       } else {
-        emailError = data.message || 'Failed to send code';
+        emailError = data.message || "Failed to send code";
       }
     } catch (err) {
-      emailError = 'An error occurred. Please try again.';
+      emailError = "An error occurred. Please try again.";
       console.error(err);
     }
   }
 
   async function verifyOldEmail() {
-    emailMessage = '';
-    emailError = '';
+    emailMessage = "";
+    emailError = "";
 
     if (!oldEmailCode) {
-      emailError = 'Please enter the verification code';
+      emailError = "Please enter the verification code";
       return;
     }
 
     try {
       const response = await fetch(`${API_BASE}/users/send`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: newEmail,
-          mode: 'update'
-        })
+          mode: "update",
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        emailMessage = 'Verification code sent to your new email (' + newEmail + ')';
-        emailStep = 'verifyNew';
+        emailMessage =
+          "Verification code sent to your new email (" + newEmail + ")";
+        emailStep = "verifyNew";
       } else {
-        emailError = data.message || 'Failed to send code to new email';
+        emailError = data.message || "Failed to send code to new email";
       }
     } catch (err) {
-      emailError = 'An error occurred. Please try again.';
+      emailError = "An error occurred. Please try again.";
       console.error(err);
     }
   }
 
   async function verifyNewEmailAndUpdate() {
-    emailMessage = '';
-    emailError = '';
+    emailMessage = "";
+    emailError = "";
 
     if (!newEmailCode) {
-      emailError = 'Please enter the verification code';
+      emailError = "Please enter the verification code";
       return;
     }
 
     try {
       const response = await fetch(`${API_BASE}/users/update/`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          authorization,
           email: newEmail,
           oldEmailVerificationCode: parseInt(oldEmailCode),
-          emailVerificationCode: parseInt(newEmailCode)
-        })
+          emailVerificationCode: parseInt(newEmailCode),
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        emailMessage = 'Email updated successfully';
-        newEmail = '';
-        oldEmailCode = '';
-        newEmailCode = '';
-        emailStep = 'input';
-        dispatch('update', data.data);
+        emailMessage = "Email updated successfully";
+        newEmail = "";
+        oldEmailCode = "";
+        newEmailCode = "";
+        emailStep = "input";
+        dispatch("update", data.data);
       } else {
-        emailError = data.message || 'Failed to update email';
+        emailError = data.message || "Failed to update email";
       }
     } catch (err) {
-      emailError = 'An error occurred. Please try again.';
+      emailError = "An error occurred. Please try again.";
       console.error(err);
     }
   }
-  
+
   function cancelEmailChange() {
-    emailStep = 'input';
-    oldEmailCode = '';
-    newEmailCode = '';
-    emailMessage = '';
-    emailError = '';
+    emailStep = "input";
+    oldEmailCode = "";
+    newEmailCode = "";
+    emailMessage = "";
+    emailError = "";
   }
 </script>
 
@@ -306,20 +309,20 @@
     <h3>Profile</h3>
     <div class="form-group">
       <label for="username">Username</label>
-      <input 
-        type="text" 
-        id="username" 
-        bind:value={username} 
+      <input
+        type="text"
+        id="username"
+        bind:value={userData.user.username}
         placeholder="Enter username"
       />
     </div>
-    
+
     <div class="form-group">
       <label for="hackatime">Hackatime API Key</label>
-      <input 
-        type="text" 
-        id="hackatime" 
-        bind:value={hackatimeApiKey} 
+      <input
+        type="text"
+        id="hackatime"
+        bind:value={hackatimeApiKey}
         placeholder="Enter Hackatime API Key"
       />
       <small
@@ -340,27 +343,29 @@
 
   <div class="section">
     <h3>Change Email</h3>
-    <p>Current Email: <strong>{user.email}</strong></p>
-    
-    {#if emailStep === 'input'}
+    <p>Current Email: <strong>{userData.user.email}</strong></p>
+
+    {#if emailStep === "input"}
       <div class="form-group">
         <label for="newEmail">New Email Address</label>
-        <input 
-          type="email" 
-          id="newEmail" 
-          bind:value={newEmail} 
+        <input
+          type="email"
+          id="newEmail"
+          bind:value={newEmail}
           placeholder="Enter new email"
         />
       </div>
       <button on:click={startEmailChange}>Change Email</button>
-    {:else if emailStep === 'verifyOld'}
+    {:else if emailStep === "verifyOld"}
       <p class="step-info">Step 1 of 2: Verify your current email</p>
       <div class="form-group">
-        <label for="oldEmailCode">Verification Code (sent to {user.email})</label>
-        <input 
-          type="text" 
-          id="oldEmailCode" 
-          bind:value={oldEmailCode} 
+        <label for="oldEmailCode"
+          >Verification Code (sent to {userData.user.email})</label
+        >
+        <input
+          type="text"
+          id="oldEmailCode"
+          bind:value={oldEmailCode}
           placeholder="Enter 6-digit code"
         />
       </div>
@@ -368,14 +373,14 @@
         <button on:click={verifyOldEmail}>Continue</button>
         <button class="secondary" on:click={cancelEmailChange}>Cancel</button>
       </div>
-    {:else if emailStep === 'verifyNew'}
+    {:else if emailStep === "verifyNew"}
       <p class="step-info">Step 2 of 2: Verify your new email</p>
       <div class="form-group">
         <label for="newEmailCode">Verification Code (sent to {newEmail})</label>
-        <input 
-          type="text" 
-          id="newEmailCode" 
-          bind:value={newEmailCode} 
+        <input
+          type="text"
+          id="newEmailCode"
+          bind:value={newEmailCode}
           placeholder="Enter 6-digit code"
         />
       </div>
@@ -392,45 +397,64 @@
   <div class="section">
     <h3>Hack Club Account</h3>
     <p class="section-description">
-      Link your Hack Club account to access all features. A verified Hack Club account is required to create spaces.
+      Link your Hack Club account to access all features. A verified Hack Club
+      account is required to create spaces.
     </p>
 
     {#if isHackclubLinked}
       <div class="hackclub-status">
         <div class="status-row">
           <span class="status-label">Status:</span>
-          <span class="status-badge {getVerificationStatusClass(verificationStatus)}">
+          <span
+            class="status-badge {getVerificationStatusClass(
+              verificationStatus,
+            )}"
+          >
             {getVerificationStatusText(verificationStatus)}
           </span>
         </div>
         <div class="status-row">
           <span class="status-label">Hack Club ID:</span>
-          <span class="status-value">{user.hackclub_id}</span>
+          <span class="status-value">{userData.user.hackclub_id}</span>
         </div>
       </div>
 
-      {#if !['verified', 'verified_eligible', 'verified_but_over_18'].includes(verificationStatus)}
+      {#if !["verified", "verified_eligible", "verified_but_over_18"].includes(verificationStatus)}
         <p class="verification-warning">
-          Your Hack Club account is not verified. Please complete verification at 
-          <a href="https://auth.hackclub.com" target="_blank" rel="noopener noreferrer">auth.hackclub.com</a> 
+          Your Hack Club account is not verified. Please complete verification
+          at
+          <a
+            href="https://auth.hackclub.com"
+            target="_blank"
+            rel="noopener noreferrer">auth.hackclub.com</a
+          >
           to create spaces.
         </p>
       {/if}
 
       <div class="button-group">
         <button on:click={refreshVerification} disabled={hackclubLoading}>
-          {hackclubLoading ? 'Refreshing...' : 'Refresh Status'}
+          {hackclubLoading ? "Refreshing..." : "Refresh Status"}
         </button>
-        <button class="secondary danger" on:click={unlinkHackClub} disabled={hackclubLoading}>
+        <button
+          class="secondary danger"
+          on:click={unlinkHackClub}
+          disabled={hackclubLoading}
+        >
           Unlink Account
         </button>
       </div>
     {:else}
       <p class="not-linked-message">
-        No Hack Club account linked. Link your account to verify your identity and create spaces.
+        No Hack Club account linked. Link your account to verify your identity
+        and create spaces.
       </p>
       <button class="hackclub-link-button" on:click={linkHackClub}>
-        <img src="https://assets.hackclub.com/icon-rounded.svg" alt="" class="hackclub-icon" />
+        <img
+          src="https://assets.hackclub.com/icon-rounded.svg"
+          alt=""
+          class="hackclub-icon"
+        />
         Link Hack Club Account
       </button>
     {/if}
@@ -644,7 +668,9 @@
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
-    transition: border-color 0.2s, background 0.2s;
+    transition:
+      border-color 0.2s,
+      background 0.2s;
   }
 
   .hackclub-link-button:hover {
