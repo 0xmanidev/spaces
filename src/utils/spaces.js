@@ -111,7 +111,7 @@ export const createContainer = async (password, type, authorization) => {
 
     const container = await docker.createContainer({
       Image: config.image,
-      Env: config.env(password, port),
+      Env: [...config.env(password, port), "SELKIES_FILE_TRANSFERS=upload,download", "SELKIES_UI_SIDEBAR_SHOW_FILES=True"],
       ExposedPorts: { [config.port]: {} },
       HostConfig: hostConfig,
     });
