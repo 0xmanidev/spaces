@@ -122,7 +122,7 @@ export const createContainer = async (password, type, authorization) => {
       try {
         console.log("Running setup script for code-server container...");
         const setupScriptPath = path.join(__dirname, "../../code-server-setup.sh");
-        const setupScript = fs.readFileSync(setupScriptPath, "utf8");
+        const setupScript = fs.readFileSync(setupScriptPath, "utf8").replace(/\r\n/g, '\n');
         
         const hackatimeApiKey = user.hackatime_api_key || "";
         const sanitizedApiKey = hackatimeApiKey.replace(/[^a-zA-Z0-9\-_]/g, '');
