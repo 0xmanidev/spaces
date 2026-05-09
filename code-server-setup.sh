@@ -12,10 +12,14 @@ echo "Starting development environment setup..."
 # Set up Hackatime if API key is provided
 if [ -n "$HACKATIME_API_KEY" ]; then
   echo "⏱️ Setting up Hackatime..."
+  echo "> Setting up code symlink"
+  ln -s /app/code-server/bin/code-server /usr/local/bin/code
+
   export HACKATIME_API_KEY="$HACKATIME_API_KEY"
-  export HACKATIME_API_URL="https://hackatime.hackclub.com/api/hackatime/v1"
-  export SUCCESS_URL="https://hackatime.hackclub.com//success.txt"
-  curl -sSL https://hackatime.hackclub.com/hackatime/setup.sh | bash
+  echo "> Setting up Hackatime"
+  curl -fsSL https://hack.club/setup/install.sh | bash -s -- $HACKATIME_API_KEY --yes
+
+  code --install-extension wakatime.vscode-wakatime --extensions-dir /config/extensions --force
 fi
 
 echo "Updating package manager..."
