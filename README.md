@@ -19,10 +19,14 @@ cp example.env .env # fill out the .env
 npm install
 
 npm run client-install
+```
 
+#### Running the server/client:
+```
 # run both client and server
 npm run dev
 
+# Or you can run the backend and client separately
 # run only backend
 npm run serve:server
 
