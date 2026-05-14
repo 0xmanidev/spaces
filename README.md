@@ -19,6 +19,8 @@ cp example.env .env # fill out the .env
 npm install
 
 npm run client-install
+
+npm run migrate
 ```
 
 #### Running the server/client:
