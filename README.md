@@ -20,9 +20,15 @@ npm install
 
 npm run client-install
 
+npm run migrate
+```
+
+#### Running the server/client:
+```
 # run both client and server
 npm run dev
 
+# Or you can run the backend and client separately
 # run only backend
 npm run serve:server
 
