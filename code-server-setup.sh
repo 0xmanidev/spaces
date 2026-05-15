@@ -6,7 +6,8 @@
 set -e  
 
 HACKATIME_API_KEY="${1:-}"
-
+EXTENSIONS_STRING="${2:-}"
+echo "$EXTENSIONS_STRING"
 echo "Starting development environment setup..."
 
 # Set up Hackatime if API key is provided
@@ -21,6 +22,12 @@ if [ -n "$HACKATIME_API_KEY" ]; then
 
   code --install-extension wakatime.vscode-wakatime --extensions-dir /config/extensions --force
 fi
+
+readarray -t EXTENSIONS <<< "$EXTENSIONS_STRING"
+for extension in "${EXTENSIONS[@]}"; do
+  echo "> Installing $extension"
+  code --install-extension "$extension" --extensions-dir /config/extensions --force 
+done
 
 echo "Updating package manager..."
 sudo apt update && sudo apt upgrade -y

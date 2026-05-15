@@ -24,6 +24,10 @@
   $: isHackclubLinked = !!userData.user.hackclub_id;
   $: verificationStatus = userData.user.hackclub_verification_status;
 
+  let vscodeExtensionsMessage = "";
+  let vscodeExtensionsError = "";
+  $: vscodeExtensions = userData.user.vscode_extensions;
+
   async function linkHackClub() {
     hackclubError = "";
     hackclubMessage = "";
@@ -300,6 +304,36 @@
     emailMessage = "";
     emailError = "";
   }
+
+  async function updateVSCodeSettings() {
+    vscodeExtensionsMessage = "";
+    vscodeExtensionsError = "";
+
+    try {
+      const response = await fetch(`${API_BASE}/users/update`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          vscode_extensions: vscodeExtensions,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        vscodeExtensionsMessage = "Extensions updated successfully";
+        dispatch("update", data.data);
+      } else {
+        vscodeExtensionsError = data.message || "Failed to update Extensions";
+      }
+    } catch (err) {
+      vscodeExtensionsError = "An error occurred. Please try again.";
+      console.error(err);
+    }
+  }
 </script>
 
 <div class="settings-container">
@@ -392,6 +426,42 @@
 
     {#if emailMessage}<div class="success">{emailMessage}</div>{/if}
     {#if emailError}<div class="error">{emailError}</div>{/if}
+  </div>
+
+  <div class="section">
+    <h3>VSCode customization</h3>
+    <p class="section-description">
+      Customize which extensions are installed and which settings are applied
+      when a new VSCode Space is created. If you already have a VSCode space
+      running, you'll have to make a new one for the settings to apply.
+    </p>
+
+    <div class="form-group">
+      <label for="vscode-extensions">Hackatime API Key</label>
+      <textarea
+        id="vscode-extensions"
+        bind:value={vscodeExtensions}
+        placeholder="Enter the IDs of extensions with one extension per line
+Example:
+eamodio.gitlens
+svelte.svelte-vscode
+astro-build.astro-vscode
+"
+      ></textarea>
+      <small
+        >Not sure how to find extension IDs? Read this <a
+          //TODO: add the guide here
+          href="https://hackatime.hackclub.com/my/settings/access"
+          target="_blank"
+          rel="noopener noreferrer">guide</a
+        ></small
+      >
+    </div>
+
+    {#if vscodeExtensionsMessage}<div class="success">{message}</div>{/if}
+    {#if vscodeExtensionsError}<div class="error">{error}</div>{/if}
+
+    <button on:click={updateVSCodeSettings}>Update VSCode settings</button>
   </div>
 
   <div class="section">
@@ -500,6 +570,13 @@
     margin-bottom: 5px;
     font-weight: 500;
     color: var(--text);
+  }
+
+  textarea {
+    resize: none;
+
+    height: 16rem;
+    width: 100%;
   }
 
   input {
