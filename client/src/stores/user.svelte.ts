@@ -8,6 +8,7 @@ class UserData {
         hackatime_api_key: string,
         hackclub_id: string,
         hackclub_verification_status: string,
+        vscode_extensions: string
     }>()
 
     async refresh() {

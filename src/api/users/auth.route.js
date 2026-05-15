@@ -29,7 +29,8 @@ router.get("/me", async (req, res) => {
         is_admin: user.is_admin,
         hackatime_api_key: user.hackatime_api_key,
         hackclub_id: user.hackclub_id,
-        hackclub_verification_status: user.hackclub_verification_status
+        hackclub_verification_status: user.hackclub_verification_status,
+        vscode_extensions: user.vscode_extensions
       }
     })
   } catch (_) {
@@ -315,7 +316,7 @@ router.post('/signout', async (req, res) => {
 router.put('/update', async (req, res) => {
   try {
     const authorization = req.authToken;
-    const { username, hackatime_api_key } = req.body;
+    const { username, hackatime_api_key, vscode_extensions } = req.body;
 
     if (!authorization) {
       return res.status(401).json({
@@ -362,6 +363,10 @@ router.put('/update', async (req, res) => {
       updates.hackatime_api_key = hackatime_api_key;
     }
 
+    if (vscode_extensions !== undefined) {
+      updates.vscode_extensions = vscode_extensions;
+    }
+
     if (Object.keys(updates).length > 0) {
       await pg('users')
         .where('id', user.id)
@@ -379,7 +384,8 @@ router.put('/update', async (req, res) => {
         username: updatedUser.username,
         email: updatedUser.email,
         is_admin: updatedUser.is_admin,
-        hackatime_api_key: updatedUser.hackatime_api_key
+        hackatime_api_key: updatedUser.hackatime_api_key,
+        vscode_extensions: updatedUser.vscode_extensions
       }
     });
 
