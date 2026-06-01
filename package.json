@@ -10,7 +10,8 @@
     "serve:server": "nodemon src/index.js",
     "serve:client": "cd client && npm run dev",
     "dev": "concurrently \"npm run serve:server\" \"npm run serve:client\"",
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false cd client && npm install && npm run build"
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false cd client && npm install && npm run build",
+    "migrate": "knex migrate:latest"
   },
   "author": "Charmunk",
   "license": "MIT",
@@ -21,10 +22,10 @@
     "concurrently": "^7.5.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "dockerode": "^4.0.9",
+    "dockerode": "^5.0.0",
     "dotenv": "^17.2.3",
-    "express": "^4.18.2",
-    "express-rate-limit": "^8.2.1",
+    "express": "^4.22.1",
+    "express-rate-limit": "^8.5.1",
     "get-port": "^7.1.0",
     "knex": "^3.1.0",
     "pg": "^8.16.3"

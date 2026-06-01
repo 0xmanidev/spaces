@@ -33,7 +33,7 @@ const containerConfigs = {
   },
   "kicad": {
     image: "linuxserver/kicad",
-    port: "3001/tcp", 
+    port: "3001/tcp",
     env: (password) => [`PASSWORD=${password}`],
     description: "KiCad PCB Design"
   }
@@ -111,7 +111,7 @@ export const createContainer = async (password, type, authorization) => {
 
     const container = await docker.createContainer({
       Image: config.image,
-      Env: config.env(password, port),
+      Env: [...config.env(password, port), "SELKIES_FILE_TRANSFERS=upload,download", "SELKIES_UI_SIDEBAR_SHOW_FILES=True"],
       ExposedPorts: { [config.port]: {} },
       HostConfig: hostConfig,
     });
@@ -122,19 +122,19 @@ export const createContainer = async (password, type, authorization) => {
       try {
         console.log("Running setup script for code-server container...");
         const setupScriptPath = path.join(__dirname, "../../code-server-setup.sh");
-        const setupScript = fs.readFileSync(setupScriptPath, "utf8");
-        
+        const setupScript = fs.readFileSync(setupScriptPath, "utf8").replace(/\r\n/g, '\n');
+
         const hackatimeApiKey = user.hackatime_api_key || "";
         const sanitizedApiKey = hackatimeApiKey.replace(/[^a-zA-Z0-9\-_]/g, '');
         const exec = await container.exec({
-          Cmd: ["bash", "-c", `cat > /tmp/setup.sh << 'EOF'\n${setupScript}\nEOF\nchmod +x /tmp/setup.sh && /tmp/setup.sh '${sanitizedApiKey}' > /app/postinstall.log 2>&1`],
+          Cmd: ["bash", "-c", `cat > /tmp/setup.sh << 'EOF'\n${setupScript}\nEOF\nchmod +x /tmp/setup.sh && /tmp/setup.sh '${sanitizedApiKey}' '${user.vscode_extensions.replace(/[^a-zA-Z0-9.-]/g, "")}' > /app/postinstall.log 2>&1`],
           AttachStdout: true,
           AttachStderr: true,
         });
-        
+
         const stream = await exec.start();
         stream.pipe(process.stdout);
-        
+
         console.log("Setup script executed successfully");
       } catch (setupErr) {
         console.error("Failed to run setup script (container will still be created):", setupErr);
@@ -244,7 +244,7 @@ export const startContainer = async (spaceId, authorization) => {
     }
 
     const container = docker.getContainer(space.container_id);
-    
+
     await container.inspect();
     await container.start();
 
@@ -265,15 +265,15 @@ export const startContainer = async (spaceId, authorization) => {
         console.error("Failed to set up Hackatime (container will still start):", hackatimeErr);
       }
     }
-    
+
     // Update running status and started_at timestamp in database
     await pg('spaces')
       .where('id', spaceId)
-      .update({ 
+      .update({
         running: true,
         started_at: new Date()
       });
-    
+
     return {
       message: "Container started successfully",
       spaceId: space.id,
@@ -281,7 +281,7 @@ export const startContainer = async (spaceId, authorization) => {
     };
   } catch (err) {
     console.error("Docker error:", err);
-    
+
     if (err.statusCode === 404) {
       const error = new Error(err.message || "Container not found");
       error.statusCode = 404;
@@ -295,7 +295,7 @@ export const startContainer = async (spaceId, authorization) => {
     if (err.statusCode === 400) {
       throw err;
     }
-    
+
     throw new Error("Failed to start container");
   }
 };
@@ -327,16 +327,16 @@ export const stopContainer = async (spaceId, authorization) => {
     }
 
     const container = docker.getContainer(space.container_id);
-    
+
     await container.inspect();
     await container.stop();
-    
+
     await pg('spaces')
       .where('id', spaceId)
-      .update({ 
+      .update({
         running: false
       });
-    
+
     return {
       message: "Container stopped successfully",
       spaceId: space.id,
@@ -344,7 +344,7 @@ export const stopContainer = async (spaceId, authorization) => {
     };
   } catch (err) {
     console.error("Docker error:", err);
-    
+
     if (err.statusCode === 404) {
       const error = new Error(err.message || "Container not found");
       error.statusCode = 404;
@@ -355,7 +355,7 @@ export const stopContainer = async (spaceId, authorization) => {
       error.statusCode = 400;
       throw error;
     }
-    
+
     throw new Error("Failed to stop container");
   }
 };
@@ -388,7 +388,7 @@ export const getContainerStatus = async (spaceId, authorization) => {
 
     const container = docker.getContainer(space.container_id);
     const info = await container.inspect();
-    
+
     return {
       spaceId: space.id,
       containerId: space.container_id,
@@ -402,13 +402,13 @@ export const getContainerStatus = async (spaceId, authorization) => {
     };
   } catch (err) {
     console.error("Docker error:", err);
-    
+
     if (err.statusCode === 404) {
       const error = new Error(err.message || "Container not found");
       error.statusCode = 404;
       throw error;
     }
-    
+
     throw new Error("Failed to get container status");
   }
 };
@@ -478,12 +478,12 @@ export const deleteSpace = async (spaceId, authorization, { isAdmin = false } = 
 
   try {
     let spaceQuery = pg('spaces').where('id', spaceId);
-    
+
     if (!isAdmin) {
       const user = await getUser(authorization);
       spaceQuery = spaceQuery.where('user_id', user.id);
     }
-    
+
     const space = await spaceQuery.first();
 
     if (!space) {
@@ -493,14 +493,14 @@ export const deleteSpace = async (spaceId, authorization, { isAdmin = false } = 
     }
 
     const container = docker.getContainer(space.container_id);
-    
+
     try {
       await container.inspect();
       await container.stop();
     } catch (err) {
       console.log("Container already stopped or doesn't exist, continuing with deletion");
     }
-    
+
     try {
       await container.remove();
     } catch (err) {
@@ -515,22 +515,22 @@ export const deleteSpace = async (spaceId, authorization, { isAdmin = false } = 
         console.error("Failed to remove volume directory:", err);
       }
     }
-    
+
     await pg('spaces')
       .where('id', spaceId)
       .delete();
-    
+
     return {
       message: "Space deleted successfully",
       spaceId: space.id,
     };
   } catch (err) {
     console.error("Error deleting space:", err);
-    
+
     if (err.statusCode === 404) {
       throw err;
     }
-    
+
     throw new Error("Failed to delete space");
   }
 }

@@ -1,10 +1,6 @@
 <script>
-  import { createEventDispatcher, onMount } from 'svelte';
-  import { API_BASE } from '../config.js';
-
-  export let user = null;
-
-  const dispatch = createEventDispatcher();
+  import { onMount } from "svelte";
+  import { API_BASE } from "../config.js";
 
   let clubData = null;
   let ships = [];
@@ -13,9 +9,9 @@
   let linkLoading = false;
   let shipsLoading = false;
   let sharedLoading = false;
-  let error = '';
-  let message = '';
-  let activeTab = 'info';
+  let error = "";
+  let message = "";
+  let activeTab = "info";
 
   onMount(() => {
     loadClubData();
@@ -23,11 +19,11 @@
 
   async function loadClubData() {
     loading = true;
-    error = '';
+    error = "";
 
     try {
       const response = await fetch(`${API_BASE}/clubs/me`, {
-        credentials: 'include'
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -36,15 +32,15 @@
         clubData = data.data.club;
         if (clubData) {
           loadShips();
-          if (clubData.role === 'leader') {
+          if (clubData.role === "leader") {
             loadSharedSpaces();
           }
         }
       } else {
-        error = data.message || 'Failed to load club data';
+        error = data.message || "Failed to load club data";
       }
     } catch (err) {
-      error = 'Network error. Please try again.';
+      error = "Network error. Please try again.";
       console.error(err);
     } finally {
       loading = false;
@@ -56,7 +52,7 @@
 
     try {
       const response = await fetch(`${API_BASE}/clubs/me/ships`, {
-        credentials: 'include'
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -65,7 +61,7 @@
         ships = data.data.ships || [];
       }
     } catch (err) {
-      console.error('Failed to load ships:', err);
+      console.error("Failed to load ships:", err);
     } finally {
       shipsLoading = false;
     }
@@ -76,7 +72,7 @@
 
     try {
       const response = await fetch(`${API_BASE}/spaces/shared-with-me`, {
-        credentials: 'include'
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -85,7 +81,7 @@
         sharedSpaces = data.data.spaces || [];
       }
     } catch (err) {
-      console.error('Failed to load shared spaces:', err);
+      console.error("Failed to load shared spaces:", err);
     } finally {
       sharedLoading = false;
     }
@@ -93,28 +89,28 @@
 
   async function linkClub() {
     linkLoading = true;
-    error = '';
-    message = '';
+    error = "";
+    message = "";
 
     try {
       const response = await fetch(`${API_BASE}/clubs/link`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        credentials: 'include'
+        credentials: "include",
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        message = 'Successfully linked to your club!';
+        message = "Successfully linked to your club!";
         await loadClubData();
       } else {
-        error = data.message || 'Failed to link club';
+        error = data.message || "Failed to link club";
       }
     } catch (err) {
-      error = 'Network error. Please try again.';
+      error = "Network error. Please try again.";
       console.error(err);
     } finally {
       linkLoading = false;
@@ -122,35 +118,35 @@
   }
 
   async function unlinkClub() {
-    if (!confirm('Are you sure you want to unlink from your club?')) {
+    if (!confirm("Are you sure you want to unlink from your club?")) {
       return;
     }
 
     linkLoading = true;
-    error = '';
-    message = '';
+    error = "";
+    message = "";
 
     try {
       const response = await fetch(`${API_BASE}/clubs/unlink`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        credentials: 'include'
+        credentials: "include",
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        message = 'Successfully unlinked from club';
+        message = "Successfully unlinked from club";
         clubData = null;
         ships = [];
         sharedSpaces = [];
       } else {
-        error = data.message || 'Failed to unlink club';
+        error = data.message || "Failed to unlink club";
       }
     } catch (err) {
-      error = 'Network error. Please try again.';
+      error = "Network error. Please try again.";
       console.error(err);
     } finally {
       linkLoading = false;
@@ -158,11 +154,11 @@
   }
 
   function getRoleBadgeClass(role) {
-    return role === 'leader' ? 'role-leader' : 'role-member';
+    return role === "leader" ? "role-leader" : "role-member";
   }
 
   function formatDate(dateString) {
-    if (!dateString) return 'Unknown';
+    if (!dateString) return "Unknown";
     return new Date(dateString).toLocaleDateString();
   }
 </script>
@@ -176,41 +172,46 @@
     <div class="no-club">
       <div class="no-club-icon">🏫</div>
       <h3>No Club Linked</h3>
-      <p>Link your Hack Club to see your club information and share spaces with your club leaders.</p>
-      <p class="info-text">Link using your registered email as a club leader or member.</p>
-      
+      <p>
+        Link your Hack Club to see your club information and share spaces with
+        your club leaders.
+      </p>
+      <p class="info-text">
+        Link using your registered email as a club leader or member.
+      </p>
+
       {#if error}
         <div class="error">{error}</div>
       {/if}
       {#if message}
         <div class="success">{message}</div>
       {/if}
-      
+
       <button class="btn-primary" on:click={linkClub} disabled={linkLoading}>
-        {linkLoading ? 'Linking...' : 'Link My Club'}
+        {linkLoading ? "Linking..." : "Link My Club"}
       </button>
     </div>
   {:else}
     <div class="club-tabs">
-      <button 
-        class="tab-btn" 
-        class:active={activeTab === 'info'}
-        on:click={() => activeTab = 'info'}
+      <button
+        class="tab-btn"
+        class:active={activeTab === "info"}
+        on:click={() => (activeTab = "info")}
       >
         Club Info
       </button>
-      <button 
-        class="tab-btn" 
-        class:active={activeTab === 'ships'}
-        on:click={() => activeTab = 'ships'}
+      <button
+        class="tab-btn"
+        class:active={activeTab === "ships"}
+        on:click={() => (activeTab = "ships")}
       >
         Ships ({ships.length})
       </button>
-      {#if clubData.role === 'leader'}
-        <button 
-          class="tab-btn" 
-          class:active={activeTab === 'shared'}
-          on:click={() => activeTab = 'shared'}
+      {#if clubData.role === "leader"}
+        <button
+          class="tab-btn"
+          class:active={activeTab === "shared"}
+          on:click={() => (activeTab = "shared")}
         >
           Shared Spaces ({sharedSpaces.length})
         </button>
@@ -224,7 +225,7 @@
       <div class="success">{message}</div>
     {/if}
 
-    {#if activeTab === 'info'}
+    {#if activeTab === "info"}
       <div class="club-info-card">
         <div class="club-header">
           <h3>{clubData.displayName || clubData.name}</h3>
@@ -240,12 +241,14 @@
               <span class="value">{clubData.country}</span>
             </div>
           {/if}
-          
+
           {#if clubData.metadata}
             {#if clubData.metadata.status}
               <div class="detail-row">
                 <span class="label">Status:</span>
-                <span class="value status-badge">{clubData.metadata.status}</span>
+                <span class="value status-badge"
+                  >{clubData.metadata.status}</span
+                >
               </div>
             {/if}
             {#if clubData.metadata.level}
@@ -275,15 +278,23 @@
         </div>
 
         <div class="club-actions">
-          <button class="btn-secondary" on:click={loadClubData} disabled={loading}>
+          <button
+            class="btn-secondary"
+            on:click={loadClubData}
+            disabled={loading}
+          >
             Refresh
           </button>
-          <button class="btn-danger" on:click={unlinkClub} disabled={linkLoading}>
-            {linkLoading ? 'Unlinking...' : 'Unlink Club'}
+          <button
+            class="btn-danger"
+            on:click={unlinkClub}
+            disabled={linkLoading}
+          >
+            {linkLoading ? "Unlinking..." : "Unlink Club"}
           </button>
         </div>
       </div>
-    {:else if activeTab === 'ships'}
+    {:else if activeTab === "ships"}
       <div class="ships-section">
         {#if shipsLoading}
           <div class="loading">Loading ships...</div>
@@ -295,12 +306,17 @@
           <div class="ships-grid">
             {#each ships as ship}
               <div class="ship-card">
-                <div class="ship-name">{ship.workshop || 'Unnamed Ship'}</div>
+                <div class="ship-name">{ship.workshop || "Unnamed Ship"}</div>
                 {#if ship.rating}
                   <div class="ship-rating">⭐ {ship.rating}</div>
                 {/if}
                 {#if ship.codeUrl}
-                  <a href={ship.codeUrl} target="_blank" rel="noopener noreferrer" class="ship-link">
+                  <a
+                    href={ship.codeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="ship-link"
+                  >
                     View Code →
                   </a>
                 {/if}
@@ -316,14 +332,16 @@
           </div>
         {/if}
       </div>
-    {:else if activeTab === 'shared'}
+    {:else if activeTab === "shared"}
       <div class="shared-section">
         {#if sharedLoading}
           <div class="loading">Loading shared spaces...</div>
         {:else if sharedSpaces.length === 0}
           <div class="empty-state">
             <p>No spaces have been shared with you yet.</p>
-            <p class="hint">Club members can share their spaces with you from the Dashboard.</p>
+            <p class="hint">
+              Club members can share their spaces with you from the Dashboard.
+            </p>
           </div>
         {:else}
           <div class="shared-spaces-grid">
@@ -332,7 +350,7 @@
                 <div class="space-header">
                   <span class="space-type">{space.type}</span>
                   <span class="space-status" class:running={space.running}>
-                    {space.running ? 'Running' : 'Stopped'}
+                    {space.running ? "Running" : "Stopped"}
                   </span>
                 </div>
                 <div class="space-owner">
@@ -342,11 +360,18 @@
                   <span>Shared: {formatDate(space.sharedAt)}</span>
                 </div>
                 {#if space.running && space.accessUrl}
-                  <a href={space.accessUrl} target="_blank" rel="noopener noreferrer" class="btn-primary space-open-btn">
+                  <a
+                    href={space.accessUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-primary space-open-btn"
+                  >
                     Open Space
                   </a>
                 {:else}
-                  <div class="space-stopped-hint">Space must be running to access</div>
+                  <div class="space-stopped-hint">
+                    Space must be running to access
+                  </div>
                 {/if}
               </div>
             {/each}
@@ -577,7 +602,8 @@
     border-radius: 4px;
   }
 
-  .ships-section, .shared-section {
+  .ships-section,
+  .shared-section {
     background: var(--snow);
     border: 1px solid var(--smoke);
     border-radius: 12px;

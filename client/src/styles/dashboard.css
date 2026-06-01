@@ -427,6 +427,16 @@
   font-size: 14px;
 }
 
+.warn-message {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: rgba(236, 55, 80, 0.1);
+  border: 2px solid var(--orange);
+  border-radius: 8px;
+  color: var(--orange);
+  font-size: 16px;
+}
+
 .section-title {
   font-size: 24px;
   font-weight: bold;

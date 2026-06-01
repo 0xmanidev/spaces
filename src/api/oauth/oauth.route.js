@@ -23,9 +23,9 @@ async function cleanupExpiredStates() {
 router.get('/hackclub/login', async (req, res) => {
   try {
     await cleanupExpiredStates();
-    
+
     const state = generateState();
-    
+
     await pg('oauth_states').insert({
       state,
       mode: 'login',
@@ -34,6 +34,7 @@ router.get('/hackclub/login', async (req, res) => {
     });
 
     const url = new URL(HACKCLUB_AUTH_URL);
+    console.log(process.env.HACKCLUB_REDIRECT_URI)
     url.searchParams.set('client_id', process.env.HACKCLUB_CLIENT_ID);
     url.searchParams.set('redirect_uri', process.env.HACKCLUB_REDIRECT_URI);
     url.searchParams.set('response_type', 'code');
@@ -50,7 +51,7 @@ router.get('/hackclub/login', async (req, res) => {
 router.post('/hackclub/link', async (req, res) => {
   try {
     const authorization = req.authToken;
-    
+
     if (!authorization) {
       return res.status(401).json({
         success: false,
@@ -74,9 +75,9 @@ router.post('/hackclub/link', async (req, res) => {
     }
 
     await cleanupExpiredStates();
-    
+
     const state = generateState();
-    
+
     await pg('oauth_states').insert({
       state,
       mode: 'link',
@@ -125,7 +126,7 @@ router.get('/callback', async (req, res) => {
     await pg('oauth_states').where({ state }).delete();
 
     console.log('Exchanging code for token with redirect_uri:', process.env.HACKCLUB_REDIRECT_URI);
-    
+
     const tokenBody = new URLSearchParams({
       client_id: process.env.HACKCLUB_CLIENT_ID,
       client_secret: process.env.HACKCLUB_CLIENT_SECRET,
@@ -164,7 +165,7 @@ router.get('/callback', async (req, res) => {
 
     const meData = await meResponse.json();
     const identity = meData.identity || meData;
-    
+
     const hackclubId = identity.id;
     const email = identity.primary_email || identity.email;
     const firstName = identity.first_name || 'User';
@@ -178,7 +179,7 @@ router.get('/callback', async (req, res) => {
 
     if (stateRow.mode === 'link') {
       const currentUser = await pg('users').where({ id: stateRow.user_id }).first();
-      
+
       if (!currentUser) {
         return res.redirect('/?error=oauth_link_user_not_found');
       }
@@ -201,7 +202,7 @@ router.get('/callback', async (req, res) => {
       user = await pg('users').where({ id: currentUser.id }).first();
     } else {
       user = await pg('users').where({ hackclub_id: hackclubId }).first();
-      
+
       if (!user) {
         user = await pg('users').where({ email }).first();
       }
@@ -218,14 +219,14 @@ router.get('/callback', async (req, res) => {
         if (username.length < 3) {
           username = 'user' + crypto.randomBytes(4).toString('hex');
         }
-        
+
         const existingUsername = await pg('users').where({ username }).first();
         if (existingUsername) {
           username = username + crypto.randomBytes(4).toString('hex');
         }
 
         const authToken = randomToken();
-        
+
         const [newUser] = await pg('users')
           .insert({
             email,
@@ -254,17 +255,7 @@ router.get('/callback', async (req, res) => {
       secure: process.env.NODE_ENV === 'production'
     });
 
-    const userData = {
-      username: user.username,
-      email: user.email,
-      is_admin: user.is_admin,
-      hackatime_api_key: user.hackatime_api_key,
-      hackclub_id: user.hackclub_id,
-      hackclub_verification_status: user.hackclub_verification_status
-    };
-
-    const encodedData = encodeURIComponent(JSON.stringify(userData));
-    res.redirect(`/#oauth_success=true&user_data=${encodedData}`);
+    res.redirect("/#oauth_success=true");
 
   } catch (error) {
     console.error('OAuth callback error:', error);
@@ -275,7 +266,7 @@ router.get('/callback', async (req, res) => {
 router.get('/status', async (req, res) => {
   try {
     const authorization = req.authToken;
-    
+
     if (!authorization) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
@@ -303,7 +294,7 @@ router.get('/status', async (req, res) => {
 router.post('/refresh-verification', async (req, res) => {
   try {
     const authorization = req.authToken;
-    
+
     if (!authorization) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
@@ -318,9 +309,9 @@ router.post('/refresh-verification', async (req, res) => {
     );
 
     if (!checkResponse.ok) {
-      return res.status(502).json({ 
-        success: false, 
-        message: 'Unable to verify status with Hack Club' 
+      return res.status(502).json({
+        success: false,
+        message: 'Unable to verify status with Hack Club'
       });
     }
 
@@ -352,7 +343,7 @@ router.post('/refresh-verification', async (req, res) => {
 router.post('/unlink', async (req, res) => {
   try {
     const authorization = req.authToken;
-    
+
     if (!authorization) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
@@ -363,9 +354,9 @@ router.post('/unlink', async (req, res) => {
     }
 
     if (!user.hackclub_id) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No Hack Club account linked' 
+      return res.status(400).json({
+        success: false,
+        message: 'No Hack Club account linked'
       });
     }
 

@@ -13,6 +13,33 @@ const randomToken = () => {
   return crypto.randomBytes(32).toString('hex');
 };
 
+router.get("/me", async (req, res) => {
+  try {
+    const authorization = req.authToken;
+
+    const user = await pg('users')
+      .where('authorization', authorization)
+      .first();
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        username: user.username,
+        email: user.email,
+        is_admin: user.is_admin,
+        hackatime_api_key: user.hackatime_api_key,
+        hackclub_id: user.hackclub_id,
+        hackclub_verification_status: user.hackclub_verification_status,
+        vscode_extensions: user.vscode_extensions
+      }
+    })
+  } catch (_) {
+    return res.status(401).json({
+      success: false
+    })
+  }
+})
+
 router.get('/send', (req, res) => {
   res.status(200).json({
     message: 'Use Post to /send to send verification code',
@@ -70,7 +97,7 @@ router.post('/send', /* strictLimiter, */ async (req, res) => {
 router.post('/signup', /* authLimiter, */ async (req, res) => {
   try {
     const { email: rawEmail, username: rawUsername, verificationCode } = req.body;
-    
+
     const emailValidation = validateEmail(rawEmail);
     if (!emailValidation.valid) {
       return res.status(400).json({
@@ -79,7 +106,7 @@ router.post('/signup', /* authLimiter, */ async (req, res) => {
       });
     }
     const email = emailValidation.normalized;
-    
+
     const usernameValidation = validateUsername(rawUsername);
     if (!usernameValidation.valid) {
       return res.status(400).json({
@@ -88,14 +115,14 @@ router.post('/signup', /* authLimiter, */ async (req, res) => {
       });
     }
     const username = usernameValidation.normalized;
-    
+
     if (!verificationCode) {
       return res.status(400).json({
         success: false,
         message: 'Verification code is required'
       });
     }
-    
+
     const codeValid = await checkEmail(email, verificationCode);
     if (!codeValid) {
       return res.status(400).json({
@@ -103,21 +130,21 @@ router.post('/signup', /* authLimiter, */ async (req, res) => {
         message: 'Invalid or expired verification code'
       });
     }
-    
+
     const existingUser = await pg('users')
       .where('email', email)
       .orWhere('username', username)
       .first();
-    
+
     if (existingUser) {
       return res.status(409).json({
         success: false,
         message: existingUser.email === email ? 'Email already registered' : 'Username already taken'
       });
     }
-    
+
     const authToken = randomToken();
-    
+
     const [newUser] = await pg('users')
       .insert({
         email,
@@ -148,17 +175,17 @@ router.post('/signup', /* authLimiter, */ async (req, res) => {
         hackclub_verification_status: newUser.hackclub_verification_status
       }
     });
-    
+
   } catch (error) {
     console.error('Error in /signup route:', error);
-    
-    if (error.code === '23505') { 
+
+    if (error.code === '23505') {
       return res.status(409).json({
         success: false,
         message: 'Email or username already exists'
       });
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Failed to create user account',
@@ -171,7 +198,7 @@ router.post('/signup', /* authLimiter, */ async (req, res) => {
 router.post('/login', /* authLimiter, */ async (req, res) => {
   try {
     const { email: rawEmail, verificationCode } = req.body;
-    
+
     const emailValidation = validateEmail(rawEmail);
     if (!emailValidation.valid) {
       return res.status(400).json({
@@ -180,14 +207,14 @@ router.post('/login', /* authLimiter, */ async (req, res) => {
       });
     }
     const email = emailValidation.normalized;
-    
+
     if (!verificationCode) {
       return res.status(400).json({
         success: false,
         message: 'Verification code is required'
       });
     }
-    
+
     const codeValid = await checkEmail(email, verificationCode);
     if (!codeValid) {
       return res.status(400).json({
@@ -195,20 +222,20 @@ router.post('/login', /* authLimiter, */ async (req, res) => {
         message: 'Invalid or expired verification code'
       });
     }
-    
+
     const user = await pg('users')
       .where('email', email)
       .first();
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found. Please sign up first.'
       });
     }
-    
+
     const newAuthToken = randomToken();
-    
+
     const [updatedUser] = await pg('users')
       .where('email', email)
       .update({ authorization: newAuthToken })
@@ -233,7 +260,7 @@ router.post('/login', /* authLimiter, */ async (req, res) => {
         hackclub_verification_status: updatedUser.hackclub_verification_status
       }
     });
-    
+
   } catch (error) {
     console.error('Error in /login route:', error);
     res.status(500).json({
@@ -248,7 +275,7 @@ router.post('/login', /* authLimiter, */ async (req, res) => {
 router.post('/signout', async (req, res) => {
   try {
     const authorization = req.headers.authorization || req.cookies?.auth_token;
-    
+
     if (!authorization) {
       res.clearCookie('auth_token');
       return res.status(200).json({
@@ -256,11 +283,11 @@ router.post('/signout', async (req, res) => {
         message: 'Sign out successful'
       });
     }
-    
+
     const user = await pg('users')
       .where('authorization', authorization)
       .first();
-    
+
     if (user) {
       const newAuthToken = randomToken();
       await pg('users')
@@ -274,7 +301,7 @@ router.post('/signout', async (req, res) => {
       success: true,
       message: 'Sign out successful'
     });
-    
+
   } catch (error) {
     console.error('Error in /signout route:', error);
     res.clearCookie('auth_token');
@@ -289,28 +316,28 @@ router.post('/signout', async (req, res) => {
 router.put('/update', async (req, res) => {
   try {
     const authorization = req.authToken;
-    const { username, hackatime_api_key } = req.body;
-    
+    const { username, hackatime_api_key, vscode_extensions } = req.body;
+
     if (!authorization) {
       return res.status(401).json({
         success: false,
         message: 'Unauthorized'
       });
     }
-    
+
     const user = await pg('users')
       .where('authorization', authorization)
       .first();
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    
+
     const updates = {};
-    
+
     if (username && username !== user.username) {
       if (username.length > 100) {
         return res.status(400).json({
@@ -318,11 +345,11 @@ router.put('/update', async (req, res) => {
           message: 'Username must be 100 characters or less'
         });
       }
-      
+
       const existingUser = await pg('users')
         .where('username', username)
         .first();
-      
+
       if (existingUser) {
         return res.status(409).json({
           success: false,
@@ -331,21 +358,25 @@ router.put('/update', async (req, res) => {
       }
       updates.username = username;
     }
-    
+
     if (hackatime_api_key !== undefined) {
       updates.hackatime_api_key = hackatime_api_key;
     }
-    
+
+    if (vscode_extensions !== undefined) {
+      updates.vscode_extensions = vscode_extensions;
+    }
+
     if (Object.keys(updates).length > 0) {
       await pg('users')
         .where('id', user.id)
         .update(updates);
     }
-    
+
     const updatedUser = await pg('users')
       .where('id', user.id)
       .first();
-      
+
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
@@ -353,10 +384,11 @@ router.put('/update', async (req, res) => {
         username: updatedUser.username,
         email: updatedUser.email,
         is_admin: updatedUser.is_admin,
-        hackatime_api_key: updatedUser.hackatime_api_key
+        hackatime_api_key: updatedUser.hackatime_api_key,
+        vscode_extensions: updatedUser.vscode_extensions
       }
     });
-    
+
   } catch (error) {
     console.error('Error in /update route:', error);
     res.status(500).json({
@@ -372,14 +404,14 @@ router.post('/verify-email-change', async (req, res) => {
   try {
     const authorization = req.authToken;
     const { newEmail, verificationCode } = req.body;
-    
+
     if (!authorization) {
       return res.status(401).json({
         success: false,
         message: 'Unauthorized'
       });
     }
-    
+
     const emailValidation = validateEmail(newEmail);
     if (!emailValidation.valid) {
       return res.status(400).json({
@@ -388,44 +420,44 @@ router.post('/verify-email-change', async (req, res) => {
       });
     }
     const normalizedNewEmail = emailValidation.normalized;
-    
+
     if (!verificationCode) {
       return res.status(400).json({
         success: false,
         message: 'Verification code is required'
       });
     }
-    
+
     const user = await pg('users')
       .where('authorization', authorization)
       .first();
-      
+
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    
+
     if (user.email === normalizedNewEmail) {
       return res.status(400).json({
         success: false,
         message: 'New email is the same as current email'
       });
     }
-    
+
     // Check if email is already taken
     const existingUser = await pg('users')
       .where('email', normalizedNewEmail)
       .first();
-      
+
     if (existingUser) {
       return res.status(409).json({
         success: false,
         message: 'Email already registered'
       });
     }
-    
+
     // Verify code
     const codeValid = await checkEmail(normalizedNewEmail, verificationCode);
     if (!codeValid) {
@@ -434,16 +466,16 @@ router.post('/verify-email-change', async (req, res) => {
         message: 'Invalid or expired verification code'
       });
     }
-    
+
     // Update email
     await pg('users')
       .where('id', user.id)
       .update({ email: normalizedNewEmail });
-      
+
     const updatedUser = await pg('users')
       .where('id', user.id)
       .first();
-      
+
     res.status(200).json({
       success: true,
       message: 'Email updated successfully',
@@ -454,7 +486,7 @@ router.post('/verify-email-change', async (req, res) => {
         hackatime_api_key: updatedUser.hackatime_api_key
       }
     });
-    
+
   } catch (error) {
     console.error('Error in /verify-email-change route:', error);
     res.status(500).json({
