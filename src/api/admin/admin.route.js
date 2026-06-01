@@ -136,6 +136,43 @@ router.post('/users/:userId/delete', requireAdmin, async (req, res) => {
   }
 });
 
+router.post('/spaces/delete-old', requireAdmin, async (req, res) => {
+  try {
+    const cutoffDate = new Date();
+    cutoffDate.setMonth(cutoffDate.getMonth() - 2);
+
+    const oldSpaces = await pg('spaces')
+      .where('created_at', '<', cutoffDate)
+      .select('id');
+
+    const deletedIds = [];
+    const errors = [];
+
+    for (const space of oldSpaces) {
+      try {
+        await deleteSpace(space.id, null, { isAdmin: true });
+        deletedIds.push(space.id);
+      } catch (err) {
+        console.error(`Error deleting old space ${space.id}:`, err);
+        errors.push({ id: space.id, error: err.message });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Deleted ${deletedIds.length} space(s) older than 2 months successfully`,
+      deletedCount: deletedIds.length,
+      errors
+    });
+  } catch (error) {
+    console.error('Error deleting old spaces:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete old spaces'
+    });
+  }
+});
+
 router.post('/spaces/:spaceId/delete', requireAdmin, async (req, res) => {
   try {
     const { spaceId } = req.params;

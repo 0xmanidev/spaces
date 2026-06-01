@@ -182,6 +182,31 @@
     }
   }
 
+  async function deleteOldSpaces() {
+    if (!confirm('Are you sure you want to delete all spaces older than 2 months? This action is irreversible.')) return;
+    
+    try {
+      loading = true;
+      const response = await fetch(`${API_BASE}/admin/spaces/delete-old`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert(data.message || 'Old spaces deleted successfully');
+        await loadData();
+      } else {
+        alert(data.message || 'Failed to delete old spaces');
+      }
+    } catch (err) {
+      console.error('Failed to delete old spaces:', err);
+      alert('Error deleting old spaces');
+    } finally {
+      loading = false;
+    }
+  }
+
   function handleMaxSpacesChange(userId, newValue) {
     const value = parseInt(newValue);
     if (!isNaN(value) && value >= 0) {
@@ -286,6 +311,9 @@
             Delete Selected ({selectedSpaces.size})
           </button>
         {/if}
+        <button on:click={deleteOldSpaces} class="delete-old-btn">
+          Delete Spaces &gt; 2 Months Old
+        </button>
       </div>
       <div class="table-container">
         <table>
@@ -461,5 +489,25 @@
 
   .delete-selected-btn:hover {
     background-color: #c82333;
+  }
+
+  .delete-old-btn {
+    padding: 8px 16px;
+    background-color: #e67e22;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s, transform 0.1s;
+  }
+
+  .delete-old-btn:hover {
+    background-color: #d35400;
+  }
+
+  .delete-old-btn:active {
+    transform: scale(0.98);
   }
 </style>
