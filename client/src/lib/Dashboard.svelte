@@ -6,7 +6,7 @@
   import { themes } from "../themes.js";
   import FlagIcon from "../assets/flag.svg?raw";
   import ShareWithClubToggle from "./ShareWithClubToggle.svelte";
-  import { userData } from "../stores/user.svelte.js";
+  import { userData } from "../stores/user.svelte";
 
   export let spaces = [];
   export let username = "";

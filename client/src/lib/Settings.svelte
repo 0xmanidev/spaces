@@ -1,7 +1,7 @@
 <script>
   import { createEventDispatcher, onMount } from "svelte";
   import { API_BASE } from "../config.js";
-  import { userData } from "../stores/user.svelte.js";
+  import { userData } from "../stores/user.svelte";
 
   const dispatch = createEventDispatcher();
 
@@ -449,8 +449,9 @@ astro-build.astro-vscode
 "
       ></textarea>
       <small
-        >Not sure how to find extension IDs? Read this <a
-          //TODO: add the guide here
+        >Not sure how to find extension IDs? Read this
+        <!-- TODO: add the guide here -->
+        <a
           href="https://hackatime.hackclub.com/my/settings/access"
           target="_blank"
           rel="noopener noreferrer">guide</a
