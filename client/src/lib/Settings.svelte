@@ -437,7 +437,7 @@
     </p>
 
     <div class="form-group">
-      <label for="vscode-extensions">Hackatime API Key</label>
+      <label for="vscode-extensions">Extensions</label>
       <textarea
         id="vscode-extensions"
         bind:value={vscodeExtensions}
