@@ -158,7 +158,7 @@ export const createContainer = async (password, type, authorization) => {
         const hackatimeApiKey = user.hackatime_api_key || "";
         const sanitizedApiKey = hackatimeApiKey.replace(/[^a-zA-Z0-9\-_]/g, '');
         const exec = await container.exec({
-          Cmd: ["bash", "-c", `cat > /tmp/setup.sh << 'EOF'\n${setupScript}\nEOF\nchmod +x /tmp/setup.sh && /tmp/setup.sh '${sanitizedApiKey}' '${user.vscode_extensions.replace(/[^a-zA-Z0-9.-]/g, "")}' > /app/postinstall.log 2>&1`],
+          Cmd: ["bash", "-c", `cat > /tmp/setup.sh << 'EOF'\n${setupScript}\nEOF\nchmod +x /tmp/setup.sh && /tmp/setup.sh '${sanitizedApiKey}' '${(user.vscode_extensions || "").replace(/[^a-zA-Z0-9.-]/g, "")}' > /app/postinstall.log 2>&1`],
           AttachStdout: true,
           AttachStderr: true,
         });
