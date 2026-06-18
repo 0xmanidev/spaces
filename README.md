@@ -77,6 +77,18 @@ SERVER_URL=http://localhost
 DOCKER=false
 ```
 
+# Testing changes...
+Create a developer account to actually test your changes
+```
+npm run create-fake-user
+```
+
+Then, visit whatever port/url your frontend is on and run this in the console and refresh the page
+```
+localStorage.setItem("auth_token", "w")
+```
+
+
 **Required Environment Variables:**
 - `PG_CONNECTION_STRING` - PostgreSQL database connection URL
 - `AIRTABLE_API_KEY` - Airtable API key for email verification
