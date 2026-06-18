@@ -6,6 +6,6 @@ export async function up(knex) {
 
 export async function down(knex) {
     await knex.schema.alterTable("users", (table) => {
-        table.text('vscode_extensions');
+        table.dropColumn('vscode_extensions');
     });
 };
