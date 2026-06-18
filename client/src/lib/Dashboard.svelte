@@ -76,6 +76,7 @@
       description: "3D modeling and animation",
     },
     { value: "kicad", label: "KiCad", description: "PCB design software" },
+    { value: "freecad", label: "FreeCAD", description: "CAD software" },
   ];
 
   async function createSpace() {
@@ -84,7 +85,11 @@
 
     try {
       const body = { type: newSpaceType };
-      if (newSpaceType !== "kicad" && newSpaceType !== "blender") {
+      if (
+        newSpaceType !== "kicad" &&
+        newSpaceType !== "blender" &&
+        newSpaceType !== "freecad"
+      ) {
         body.password = newSpacePassword;
       }
 
@@ -396,7 +401,7 @@
           </div>
         </div>
 
-        {#if newSpaceType !== "kicad" && newSpaceType !== "blender"}
+        {#if newSpaceType !== "kicad" && newSpaceType !== "blender" && newSpaceType !== "freecad"}
           <div class="form-group">
             <label class="form-label" for="password"
               >Password (min. 8 characters)</label
@@ -473,6 +478,7 @@
           disabled={loading ||
             (newSpaceType !== "kicad" &&
               newSpaceType !== "blender" &&
+              newSpaceType !== "freecad" &&
               (!newSpacePassword || newSpacePassword.length < 8))}
         >
           {loading ? "Creating..." : "Create Space"}

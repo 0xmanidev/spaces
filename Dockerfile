@@ -69,7 +69,7 @@ stdout_logfile=/var/log/supervisor/dockerd.out.log
 priority=100
 
 [program:docker-pull]
-command=/bin/bash -c "sleep 25 && docker pull linuxserver/code-server && docker pull linuxserver/blender && docker pull linuxserver/kicad && echo 'Docker images pulled successfully'"
+command=/bin/bash -c "sleep 25 && docker pull linuxserver/code-server && docker pull linuxserver/blender && docker pull linuxserver/kicad && docker pull linuxserver/freecad && echo 'Docker images pulled successfully'"
 autostart=true
 autorestart=false
 startsecs=0
