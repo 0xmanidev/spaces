@@ -283,7 +283,7 @@ All API endpoints that require authentication expect an `authorization` token in
     "type": "code-server"
   }
   ```
-- **Valid Types**: `code-server`, `blender`, `kicad`
+- **Valid Types**: `code-server`, `blender`, `kicad`, `freecad`
 - **Response**:
   ```json
   {
@@ -382,6 +382,7 @@ All API endpoints that require authentication expect an `authorization` token in
 | `code-server` | VS Code Server | `linuxserver/code-server` | 
 | `blender` | Blender 3D | `linuxserver/blender` | 
 | `kicad` | KiCad PCB Design | `linuxserver/kicad` | 
+| `freecad` | CAD software | `linuxserver/freecad` | 
 
 ### Error Responses
 
