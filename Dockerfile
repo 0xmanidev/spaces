@@ -77,6 +77,16 @@ stderr_logfile=/var/log/supervisor/docker-pull.err.log
 stdout_logfile=/var/log/supervisor/docker-pull.out.log
 priority=150
 
+[program:migrate]
+command=npm run migrate
+directory=/app
+autostart=true
+autorestart=false
+startsecs=0
+stderr_logfile=/var/log/supervisor/migrate.err.log
+stdout_logfile=/var/log/supervisor/migrate.out.log
+priority=180
+
 [program:backend]
 command=npm run serve:server
 directory=/app
