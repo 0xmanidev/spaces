@@ -16,6 +16,7 @@
   let showCreateForm = false;
   let newSpaceType = "code-server";
   let newSpacePassword = "";
+  let newSpaceHomeDir = "";
   let error = "";
   let loading = false;
   let actionLoading = {};
@@ -86,6 +87,9 @@
       const body = { type: newSpaceType };
       if (newSpaceType !== "kicad" && newSpaceType !== "blender") {
         body.password = newSpacePassword;
+        if (newSpaceHomeDir.trim()) {
+          body.homeDir = newSpaceHomeDir.trim();
+        }
       }
 
       const response = await fetch(`${API_BASE}/spaces/create`, {
@@ -102,6 +106,7 @@
       if (response.ok) {
         showCreateForm = false;
         newSpacePassword = "";
+        newSpaceHomeDir = "";
         await loadSpaces();
       } else {
         if (
@@ -458,6 +463,22 @@
                 {/if}
               </button>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="homeDir">Home Directory (optional)</label>
+            <p class="password-info">
+              The home folder name. Must live under
+              <code>/config</code> so it persists. Defaults to
+              <code>/config/workspace</code>. If you are using hackatime, you should put different folder names for each project.
+            </p>
+            <input
+              class="form-input"
+              id="homeDir"
+              type="text"
+              bind:value={newSpaceHomeDir}
+              placeholder="/config/workspace"
+            />
           </div>
         {:else}
           <div class="form-group"></div>

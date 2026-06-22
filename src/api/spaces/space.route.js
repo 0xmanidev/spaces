@@ -25,11 +25,11 @@ const router = express.Router();
 router.use(extractAuth);
 
 router.post("/create", containerOpsLimiter, async (req, res) => {
-  const { password, type } = req.body;
+  const { password, type, homeDir } = req.body;
   const authorization = req.authToken;
   
   try {
-    const result = await createContainer(password, type, authorization);
+    const result = await createContainer(password, type, authorization, homeDir);
     res.json(result);
   } catch (err) {
     if (err.validTypes) {

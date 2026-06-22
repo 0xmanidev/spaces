@@ -15,13 +15,37 @@ const __dirname = path.dirname(__filename);
 
 const docker = new Docker();
 
+const DEFAULT_WORKSPACE_DIR = "/config/workspace";
+
+// Sanitize a user-provided home/workspace directory for code-server.
+// The path must live under /config so it persists on the mounted volume,
+// and is stripped of any characters that could be unsafe in a shell command.
+const sanitizeWorkspaceDir = (homeDir) => {
+  if (!homeDir || typeof homeDir !== "string" || !homeDir.trim()) {
+    return DEFAULT_WORKSPACE_DIR;
+  }
+
+  let dir = homeDir.trim().replace(/[^a-zA-Z0-9/_.\-]/g, "");
+  if (!dir.startsWith("/")) {
+    dir = `/config/${dir}`;
+  }
+
+  dir = path.posix.normalize(dir);
+
+  if (dir !== "/config" && !dir.startsWith("/config/")) {
+    return DEFAULT_WORKSPACE_DIR;
+  }
+
+  return dir;
+};
+
 const containerConfigs = {
   "code-server": {
     image: "linuxserver/code-server",
     port: "8443/tcp",
-    env: (password, port) => [
+    env: (password, port, workspaceDir = DEFAULT_WORKSPACE_DIR) => [
       `PASSWORD=${password}`,
-      `DEFAULT_WORKSPACE=/config/workspace`
+      `DEFAULT_WORKSPACE=${workspaceDir}`
     ],
     description: "VS Code Server"
   },
@@ -39,7 +63,7 @@ const containerConfigs = {
   }
 };
 
-export const createContainer = async (password, type, authorization) => {
+export const createContainer = async (password, type, authorization, homeDir) => {
   if (!type) {
     throw new Error("Missing container type");
   }
@@ -81,6 +105,10 @@ export const createContainer = async (password, type, authorization) => {
     throw new Error("Password must be at least 8 characters long");
   }
 
+  const workspaceDir = typeLower === "code-server"
+    ? sanitizeWorkspaceDir(homeDir)
+    : DEFAULT_WORKSPACE_DIR;
+
   try {
     const port = await getPort();
 
@@ -107,11 +135,22 @@ export const createContainer = async (password, type, authorization) => {
       volumePath = path.join(VOLUME_BASE_PATH, user.id.toString(), spaceUuid);
       fs.mkdirSync(volumePath, { recursive: true });
       hostConfig.Binds = [`${volumePath}:/config`];
+
+      // Pre-create the workspace directory on the host volume (which is mounted
+      // at /config) so code-server finds it the moment it starts. Otherwise the
+      // setup script's mkdir runs too late and code-server reports "workspace
+      // not found".
+      if (typeLower === "code-server") {
+        const relWorkspace = workspaceDir.replace(/^\/config\/?/, "");
+        if (relWorkspace) {
+          fs.mkdirSync(path.join(volumePath, relWorkspace), { recursive: true });
+        }
+      }
     }
 
     const container = await docker.createContainer({
       Image: config.image,
-      Env: [...config.env(password, port), "SELKIES_FILE_TRANSFERS=upload,download", "SELKIES_UI_SIDEBAR_SHOW_FILES=True"],
+      Env: [...config.env(password, port, workspaceDir), "SELKIES_FILE_TRANSFERS=upload,download", "SELKIES_UI_SIDEBAR_SHOW_FILES=True"],
       ExposedPorts: { [config.port]: {} },
       HostConfig: hostConfig,
     });
@@ -127,7 +166,7 @@ export const createContainer = async (password, type, authorization) => {
         const hackatimeApiKey = user.hackatime_api_key || "";
         const sanitizedApiKey = hackatimeApiKey.replace(/[^a-zA-Z0-9\-_]/g, '');
         const exec = await container.exec({
-          Cmd: ["bash", "-c", `cat > /tmp/setup.sh << 'EOF'\n${setupScript}\nEOF\nchmod +x /tmp/setup.sh && /tmp/setup.sh '${sanitizedApiKey}' '${user.vscode_extensions.replace(/[^a-zA-Z0-9.-]/g, "")}' > /app/postinstall.log 2>&1`],
+          Cmd: ["bash", "-c", `cat > /tmp/setup.sh << 'EOF'\n${setupScript}\nEOF\nchmod +x /tmp/setup.sh && /tmp/setup.sh '${sanitizedApiKey}' '${user.vscode_extensions.replace(/[^a-zA-Z0-9.-]/g, "")}' '${workspaceDir}' > /app/postinstall.log 2>&1`],
           AttachStdout: true,
           AttachStderr: true,
         });

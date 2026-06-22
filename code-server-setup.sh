@@ -7,8 +7,13 @@ set -e
 
 HACKATIME_API_KEY="${1:-}"
 EXTENSIONS_STRING="${2:-}"
+WORKSPACE_DIR="${3:-/config/workspace}"
 echo "$EXTENSIONS_STRING"
 echo "Starting development environment setup..."
+echo "Using workspace directory: $WORKSPACE_DIR"
+
+echo "> Ensuring workspace directory exists"
+mkdir -p "$WORKSPACE_DIR"
 
 # Set up Hackatime if API key is provided
 if [ -n "$HACKATIME_API_KEY" ]; then
@@ -33,7 +38,7 @@ echo "Updating package manager..."
 sudo apt update && sudo apt upgrade -y
 
 sudo apt install -y wget
-wget -O /config/workspace/README.md https://raw.githubusercontent.com/hackclub/spaces/refs/heads/main/in-space.md
+wget -O "$WORKSPACE_DIR/README.md" https://raw.githubusercontent.com/hackclub/spaces/refs/heads/main/in-space.md
 
 echo "Installing essential system tools..."
 sudo apt install -y \
