@@ -39,6 +39,29 @@ const sanitizeWorkspaceDir = (homeDir) => {
   return dir;
 };
 
+const ensureImageExists = async (image) => {
+  try {
+    await docker.getImage(image).inspect();
+  } catch (err) {
+    if (err.statusCode !== 404) {
+      throw err;
+    }
+
+    console.log(`Docker image ${image} not found locally, pulling...`);
+    const stream = await docker.pull(image);
+    await new Promise((resolve, reject) => {
+      docker.modem.followProgress(stream, (pullErr) => {
+        if (pullErr) {
+          reject(pullErr);
+        } else {
+          resolve();
+        }
+      });
+    });
+    console.log(`Docker image ${image} pulled successfully`);
+  }
+};
+
 const containerConfigs = {
   "code-server": {
     image: "linuxserver/code-server",
@@ -60,6 +83,12 @@ const containerConfigs = {
     port: "3001/tcp",
     env: (password) => [`PASSWORD=${password}`],
     description: "KiCad PCB Design"
+  },
+  "freecad": {
+    image: "linuxserver/freecad",
+    port: "3001/tcp",
+    env: (password) => [`PASSWORD=${password}`],
+    description: "FreeCAD is a general-purpose parametric 3D computer-aided design (CAD) modeler and a building information modeling (BIM) software application with finite element method (FEM) support."
   }
 };
 
@@ -97,7 +126,7 @@ export const createContainer = async (password, type, authorization, homeDir) =>
   }
 
   const typeLower = type.toLowerCase();
-  if (typeLower === "kicad" || typeLower === "blender") {
+  if (typeLower === "kicad" || typeLower === "blender" || typeLower === "freecad") {
     password = crypto.randomBytes(16).toString('hex');
   } else if (!password) {
     throw new Error("Missing container password");
@@ -129,6 +158,8 @@ export const createContainer = async (password, type, authorization, homeDir) =>
       CapDrop: ["ALL"],
       CapAdd: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID", "NET_BIND_SERVICE"]
     };
+
+    await ensureImageExists(config.image);
 
     if (VOLUME_BASE_PATH) {
       const spaceUuid = crypto.randomUUID();
@@ -166,7 +197,7 @@ export const createContainer = async (password, type, authorization, homeDir) =>
         const hackatimeApiKey = user.hackatime_api_key || "";
         const sanitizedApiKey = hackatimeApiKey.replace(/[^a-zA-Z0-9\-_]/g, '');
         const exec = await container.exec({
-          Cmd: ["bash", "-c", `cat > /tmp/setup.sh << 'EOF'\n${setupScript}\nEOF\nchmod +x /tmp/setup.sh && /tmp/setup.sh '${sanitizedApiKey}' '${user.vscode_extensions.replace(/[^a-zA-Z0-9.-]/g, "")}' '${workspaceDir}' > /app/postinstall.log 2>&1`],
+          Cmd: ["bash", "-c", `cat > /tmp/setup.sh << 'EOF'\n${setupScript}\nEOF\nchmod +x /tmp/setup.sh && /tmp/setup.sh '${sanitizedApiKey}' '${(user.vscode_extensions || "").replace(/[^a-zA-Z0-9.-]/g, "")}' '${workspaceDir}' > /app/postinstall.log 2>&1`],
           AttachStdout: true,
           AttachStderr: true,
         });
@@ -187,12 +218,14 @@ export const createContainer = async (password, type, authorization, homeDir) =>
       console.log("Docker environment detected, using standard access URL");
       if (type.toLowerCase() === 'kicad') {
         var access_url = `${process.env.SERVER_URL}/kicad/space/${port}/`;
+      } else if (type.toLowerCase() === "freecad") {
+        var access_url = `${process.env.SERVER_URL}/freecad/space/${port}/`;
       } else {
         var access_url = `${process.env.SERVER_URL}/space/${port}/`;
       }
     }
 
-    if (typeLower === "kicad" || typeLower === "blender") {
+    if (typeLower === "kicad" || typeLower === "blender" || typeLower === "freecad") {
       const urlObj = new URL(access_url);
       urlObj.username = "abc";
       urlObj.password = password;
@@ -212,7 +245,7 @@ export const createContainer = async (password, type, authorization, homeDir) =>
       volume_path: volumePath
     };
 
-    if (typeLower === "kicad" || typeLower === "blender") {
+    if (typeLower === "kicad" || typeLower === "blender" || typeLower === "freecad") {
       insertData.password = password;
     }
 

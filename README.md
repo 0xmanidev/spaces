@@ -77,6 +77,18 @@ SERVER_URL=http://localhost
 DOCKER=false
 ```
 
+# Testing changes...
+Create a developer account to actually test your changes
+```
+npm run create-fake-user
+```
+
+Then, visit whatever port/url your frontend is on and run this in the console and refresh the page
+```
+localStorage.setItem("auth_token", "w")
+```
+
+
 **Required Environment Variables:**
 - `PG_CONNECTION_STRING` - PostgreSQL database connection URL
 - `AIRTABLE_API_KEY` - Airtable API key for email verification
@@ -271,7 +283,7 @@ All API endpoints that require authentication expect an `authorization` token in
     "type": "code-server"
   }
   ```
-- **Valid Types**: `code-server`, `blender`, `kicad`
+- **Valid Types**: `code-server`, `blender`, `kicad`, `freecad`
 - **Response**:
   ```json
   {
@@ -370,6 +382,7 @@ All API endpoints that require authentication expect an `authorization` token in
 | `code-server` | VS Code Server | `linuxserver/code-server` | 
 | `blender` | Blender 3D | `linuxserver/blender` | 
 | `kicad` | KiCad PCB Design | `linuxserver/kicad` | 
+| `freecad` | CAD software | `linuxserver/freecad` | 
 
 ### Error Responses
 
