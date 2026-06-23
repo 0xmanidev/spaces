@@ -25,6 +25,9 @@
   let showPassword = false;
   let clubData = null;
   let spaceShareStatus = {};
+  let searchQuery = '';
+  let filterType = 'all';
+  let filterStatus = 'all';
 
   onMount(() => {
     loadClubData();
@@ -310,6 +313,32 @@
     return "#ec3750";
   })();
 
+
+$: uniqueTypes = [
+  ...new Set(spaces.map(s => s.type).filter(Boolean))
+].sort();
+
+$: filteredSpaces = spaces.filter(space => {
+  const q = searchQuery.trim().toLowerCase();
+  const statusText = space.running ? 'running' : 'stopped';
+
+  const matchesSearch =
+    !q ||
+    String(space.id).includes(q) ||
+    space.type?.toLowerCase().includes(q) ||
+    statusText.includes(q);
+
+  const matchesType =
+    filterType === 'all' ||
+    space.type?.toLowerCase() === filterType.toLowerCase();
+
+  const matchesStatus =
+    filterStatus === 'all' ||
+    statusText === filterStatus;
+
+  return matchesSearch && matchesType && matchesStatus;
+});
+
   function togglePasswordVisibility() {
     showPassword = !showPassword;
   }
@@ -507,94 +536,138 @@
       </div>
     {/if}
 
-    <div class="spaces-list">
-      <h3 class="section-title">Your Spaces</h3>
+  <div class="spaces-list">
+  <h3 class="section-title">Your Spaces</h3>
 
-      {#if spaces.length === 0}
-        <div class="empty-state">
-          <p>No spaces yet. Create your first space to get started!</p>
-        </div>
-      {:else}
-        <div class="spaces-grid">
-          {#each spaces as space}
-            <div class="space-card">
-              <div class="space-header">
-                <h4 class="space-type">{space.type}</h4>
-                <span class="status-badge {getStatusClass(space.status)}">
-                  {space.status || "Unknown"}
-                </span>
-              </div>
+  <div class="search-bar">
+    <input
+      class="search-input"
+      type="text"
+      placeholder="Search by ID, type, or status..."
+      bind:value={searchQuery}
+    />
 
-              <div class="space-info">
-                <p><strong>Space ID:</strong> {space.id}</p>
-                <p>
-                  <strong>Created:</strong>
-                  {new Date(space.created_at).toLocaleString()}
-                </p>
-              </div>
+    <select class="filter-select" bind:value={filterType}>
+      <option value="all">All Types</option>
+      {#each uniqueTypes as t}
+        <option value={t}>{t}</option>
+      {/each}
+    </select>
 
-              <div class="space-share-section">
-                <ShareWithClubToggle
-                  spaceId={space.id}
-                  hasClub={!!clubData}
-                  initialShared={spaceShareStatus[space.id]?.shared || false}
-                  clubName={clubData?.displayName || clubData?.name || ""}
-                />
-              </div>
+    <select class="filter-select" bind:value={filterStatus}>
+      <option value="all">All Status</option>
+      <option value="running">Running</option>
+      <option value="stopped">Stopped</option>
+    </select>
 
-              {#if actionError[space.id]}
-                <div class="error-message small">{actionError[space.id]}</div>
+    {#if searchQuery || filterType !== "all" || filterStatus !== "all"}
+      <button
+        class="clear-btn"
+        on:click={() => {
+          searchQuery = "";
+          filterType = "all";
+          filterStatus = "all";
+        }}
+      >
+        Clear
+      </button>
+    {/if}
+  </div>
+
+  {#if spaces.length === 0}
+    <div class="empty-state">
+      <p>No spaces yet. Create your first space to get started!</p>
+    </div>
+  {:else if filteredSpaces.length === 0}
+    <div class="empty-state">
+      <p>No spaces match your search.</p>
+    </div>
+  {:else}
+    <div class="spaces-grid">
+      {#each filteredSpaces as space}
+        <div class="space-card">
+          <div class="space-header">
+            <h4 class="space-type">{space.type}</h4>
+            <span class="status-badge {getStatusClass(space.status)}">
+              {space.status || "Unknown"}
+            </span>
+          </div>
+
+          <div class="space-info">
+            <p><strong>Space ID:</strong> {space.id}</p>
+            <p>
+              <strong>Created:</strong>
+              {new Date(space.created_at).toLocaleString()}
+            </p>
+          </div>
+
+          <div class="space-share-section">
+            <ShareWithClubToggle
+              spaceId={space.id}
+              hasClub={!!clubData}
+              initialShared={spaceShareStatus[space.id]?.shared || false}
+              clubName={clubData?.displayName || clubData?.name || ""}
+            />
+          </div>
+
+          {#if actionError[space.id]}
+            <div class="error-message small">
+              {actionError[space.id]}
+            </div>
+          {/if}
+
+          <div class="space-actions">
+            {#if actionLoading[space.id]}
+              <button disabled class="action-btn">
+                {actionLoading[space.id]}...
+              </button>
+            {:else}
+              {#if space.running || space.status?.toLowerCase() === "running"}
+                {#if space.access_url}
+                  <a
+                    href={space.access_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="action-btn open"
+                  >
+                    Open
+                  </a>
+                {/if}
+
+                <button
+                  class="action-btn stop"
+                  on:click={() => stopSpace(space.id)}
+                >
+                  Stop
+                </button>
+              {:else}
+                <button
+                  class="action-btn start"
+                  on:click={() => startSpace(space.id)}
+                >
+                  Start
+                </button>
               {/if}
 
-              <div class="space-actions">
-                {#if actionLoading[space.id]}
-                  <button disabled class="action-btn">
-                    {actionLoading[space.id]}...
-                  </button>
-                {:else}
-                  {#if space.running || space.status?.toLowerCase() === "running"}
-                    {#if space.access_url}
-                      <a
-                        href={space.access_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="action-btn open"
-                      >
-                        Open
-                      </a>
-                    {/if}
-                    <button
-                      class="action-btn stop"
-                      on:click={() => stopSpace(space.id)}
-                    >
-                      Stop
-                    </button>
-                  {:else}
-                    <button
-                      class="action-btn start"
-                      on:click={() => startSpace(space.id)}
-                    >
-                      Start
-                    </button>
-                  {/if}
-                  <button
-                    class="action-btn refresh"
-                    on:click={() => refreshStatus(space.id)}
-                  >
-                    ↻
-                  </button>
-                  <button
-                    class="action-btn delete"
-                    on:click={() => deleteSpace(space.id)}
-                  >
-                    Delete
-                  </button>
-                {/if}
-              </div>
-            </div>
-          {/each}
+              <button
+                class="action-btn refresh"
+                on:click={() => refreshStatus(space.id)}
+              >
+                ↻
+              </button>
+
+              <button
+                class="action-btn delete"
+                on:click={() => deleteSpace(space.id)}
+              >
+                Delete
+              </button>
+            {/if}
+          </div>
         </div>
-      {/if}
+      {/each}
     </div>
+  {/if}
+</div>  
   </div>
 </div>
