@@ -672,3 +672,23 @@
   background: transparent;
   color: var(--red);
 }
+.action-btn.copy {
+  transition: all 0.15s ease;
+}
+
+.action-btn.copy .copy-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.action-btn.copy:has(svg[aria-label="Copied"]) {
+  color: var(--green);
+  border-color: var(--green);
+}
+.refresh-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  color: var(--blue);
+  fill: currentColor;
+}
