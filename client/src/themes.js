@@ -68,6 +68,61 @@ export const themes = {
       '--white': '#15082b'
     }
   },
+  catppuccin: {
+  name: 'Catppuccin',
+  icon: 'Coffee',
+  colors: {
+    '--red': '#f38ba8',
+    '--orange': '#fab387',
+    '--yellow': '#f9e2af',
+    '--green': '#a6e3a1',
+    '--cyan': '#94e2d5',
+    '--blue': '#89b4fa',
+    '--purple': '#cba6f7',
+
+    '--muted': '#7f849c',
+
+    '--darker': '#f5e0dc',
+    '--dark': '#cdd6f4',
+    '--darkless': '#bac2de',
+
+    '--black': '#cdd6f4',
+
+    '--steel': '#a6adc8',
+    '--slate': '#9399b2',
+
+    '--smoke': '#45475a',
+    '--snow': '#181825',
+    '--white': '#11111b'
+  }
+},  nord: {
+  name: 'Nord',
+  icon: 'Snowflake',
+  colors: {
+    '--red': '#bf616a',
+    '--orange': '#d08770',
+    '--yellow': '#ebcb8b',
+    '--green': '#a3be8c',
+    '--cyan': '#88c0d0',
+    '--blue': '#81a1c1',
+    '--purple': '#b48ead',
+
+    '--muted': '#88c0d0',
+
+    '--darker': '#eceff4',
+    '--dark': '#e5e9f0',
+    '--darkless': '#d8dee9',
+
+    '--black': '#eceff4',
+
+    '--steel': '#d8dee9',
+    '--slate': '#bfc7d5',
+
+    '--smoke': '#4c566a',
+    '--snow': '#2e3440',
+    '--white': '#242933'
+  }
+},
   darkGradient: {
     name: 'Dark Gradient',
     icon: 'Gradient',
