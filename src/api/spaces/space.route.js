@@ -111,6 +111,28 @@ router.delete("/delete/:spaceId", containerOpsLimiter, async (req, res) => {
     res.status(statusCode).json({ error: err.message });
   }
 });
+router.post("/:spaceId/favorite", async (req, res) => {
+  const { spaceId } = req.params;
+  const authorization = req.authToken;
+  try {
+    const user = await getUser(authorization);
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+    const space = await pg('spaces')
+      .where({ id: spaceId, user_id: user.id })
+      .first();
+    if (!space) return res.status(404).json({ error: "Space not found" });
+
+    const [updated] = await pg('spaces')
+      .where({ id: spaceId })
+      .update({ is_favorite: !space.is_favorite })
+      .returning(['id', 'is_favorite']);
+
+    res.json({ success: true, is_favorite: updated.is_favorite });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.post("/:spaceId/share/club", spaceShareLimiter, async (req, res) => {
   const { spaceId } = req.params;

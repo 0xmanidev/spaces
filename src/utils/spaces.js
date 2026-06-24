@@ -343,7 +343,8 @@ export const startContainer = async (spaceId, authorization) => {
       .where('id', spaceId)
       .update({
         running: true,
-        started_at: new Date()
+        started_at: new Date(),
+        last_opened_at: new Date()
       });
 
     return {
@@ -498,7 +499,7 @@ export const getUserSpaces = async (authorization) => {
   try {
     const spaces = await pg('spaces')
       .where('user_id', user.id)
-      .select(['id', 'container_id', 'type', 'description', 'image', 'port', 'access_url', 'password', 'created_at', 'running']);
+      .select(['id', 'container_id', 'type', 'description', 'image', 'port', 'access_url', 'password', 'created_at', 'running','is_favorite','last_opened_at']);
 
     const spacesWithStatus = spaces.map((space) => {
       return {
